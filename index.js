@@ -3,10 +3,13 @@ const express = require('express');
 const validUrl = require('valid-url');
 const cors = require('cors');
 const app = express();
+const dns = require('dns');
+const bodyParser = require('body-parser');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
 app.use(express.json()); // Parse JSON in the request body
+app.use(bodyParser.urlencoded({extented: true}));
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
@@ -17,14 +20,24 @@ app.get('/', function(req, res) {
 });
 
 function validateUrl(req, res, next) {
-  const url = req.body && req.body.url;
+  // const url = req.body && req.body.url;
+  const { url } = req.body;
 
-  // Validate if it's a valid URL
   if (!url || !validUrl.isWebUri(url)) {
-    return res.status(400).json({ error: 'invalid url' });
+    return res.status(400).json({ error: 'Invalid URL' });
   }
-  // If the URL is valid, proceed to the next middleware or route
-  next();
+  
+  // Create a new variable to store the validated URL
+  const validatedUrl = url;
+  
+  dns.lookup(validatedUrl, (err) => {
+    if (err) {
+      return res.status(400).json({ error: 'Invalid URL' });
+    }
+    next();
+  });
+  
+
 }
 // Your first API endpoint
 app.post('/api/shorturl',
