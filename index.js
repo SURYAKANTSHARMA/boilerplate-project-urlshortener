@@ -13,8 +13,8 @@ app.use(bodyParser.urlencoded({extented: true}));
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
-const urlMapping = {};
-const counter = 0;
+let urlMapping = {};
+let counter = 0;
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
@@ -28,24 +28,22 @@ function validateUrl(req, res, next) {
   }
   
   // Create a new variable to store the validated URL
-  const validatedUrl = url;
+  const validatedUrl = new URL(url);
   
-  dns.lookup(validatedUrl, (err) => {
+  dns.lookup(validatedUrl.hostname, (err) => {
     if (err) {
       return res.status(400).json({ error: 'Invalid URL' });
     }
     next();
   });
-  
-
 }
 // Your first API endpoint
 app.post('/api/shorturl',
  validateUrl,
  function(req, res) {
   const url = req.body.url;
-  const shortUrl = ++counter; // Increment counter for each new URL
-  userMapping[counter] = url  
+  const shortUrl = ++counter; // Increment counter for each new URL  
+  userMapping[counter] = url;  
   res.json({ original_url: url, short_url: shortUrl });
 });
 
