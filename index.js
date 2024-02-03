@@ -43,15 +43,15 @@ app.post('/api/shorturl',
  function(req, res) {
   const url = req.body.url;
   const shortUrl = ++counter; // Increment counter for each new URL  
-  userMapping[counter] = url;  
+  urlMapping[counter] = url;  
   res.json({ original_url: url, short_url: shortUrl });
 });
 
-app.get('/api/shorturl/:id',
+app.get('/api/shorturl/:shorturl',
   function(req, res) {
-    const id = parseInt(req.params.id);
-    if (userMapping[id]) {
-      res.redirect(userMapping[id])
+    const id = parseInt(req.params.shorturl);
+    if (urlMapping[id]) {
+      res.redirect(urlMapping[id])
     } else {
       res.status(404).json({error: 'Short URL not found'})
     }
