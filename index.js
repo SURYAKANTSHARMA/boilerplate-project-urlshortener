@@ -5,6 +5,7 @@ const cors = require('cors');
 const app = express();
 const dns = require('dns');
 const bodyParser = require('body-parser');
+const validator = require("validator");
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -23,20 +24,28 @@ function validateUrl(req, res, next) {
   // const url = req.body && req.body.url;
   const { url } = req.body;
 
+  validate(url,req, res, next);
+}
+
+function validate(url, req, res, next) {
   if (!url || !validUrl.isWebUri(url)) {
-    return res.status(400).json({ error: 'Invalid URL' });
+    return res.json({ error: 'invalid url' });
   }
-  
+
   // Create a new variable to store the validated URL
   const validatedUrl = new URL(url);
-  
-  dns.lookup(validatedUrl.hostname, (err) => {
-    if (err) {
-      return res.status(400).json({ error: 'Invalid URL' });
-    }
+
+  const httpRegex = /^(https)(:\/\/)/;
+  if (!httpRegex.test(url)) {return res.json({ error: 'invalid url' })}
+
+
+    dns.lookup(validatedUrl.hostname, (err, addresses) => {
+     if(!addresses) {
+        return res.send({ error: 'invalid url' });
+      }
     next();
   });
-}
+} 
 // Your first API endpoint
 app.post('/api/shorturl',
  validateUrl,
@@ -50,13 +59,16 @@ app.post('/api/shorturl',
 app.get('/api/shorturl/:shorturl',
   function(req, res) {
     const id = parseInt(req.params.shorturl);
-    if (urlMapping[id]) {
-      res.redirect(urlMapping[id])
+    const url = urlMapping[id]
+    if (url) {
+      validate(url,req, res, ()=> {
+         res.redirect(urlMapping[id])
+      });
     } else {
-      res.status(404).json({error: 'Short URL not found'})
+      res.json({error: 'Short URL not found'})
     }
  });
-
+ 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
